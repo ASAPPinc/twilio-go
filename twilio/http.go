@@ -2,7 +2,6 @@ package twilio
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
