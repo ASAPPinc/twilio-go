@@ -79,7 +79,6 @@ func (c *Client) MakeRequest(method string, pathPart string, data url.Values, v 
 	// XXX investigate whether this could overflow with a large response body,
 	// it appears so from reading the ioutil source.
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
 	json.Unmarshal(body, &v)
 	return *resp, nil
 }
