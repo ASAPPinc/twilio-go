@@ -3,10 +3,9 @@ package twilio
 import (
 	//"fmt"
 
+	"fmt"
 	"net/url"
 	"strconv"
-
-	"github.com/golang/glog"
 )
 
 const pathPart = "Messages"
@@ -68,10 +67,12 @@ type MessageIterator struct {
 
 func (m *MessageService) Create(data url.Values) (Message, error) {
 	msg := new(Message)
-	_, err := m.client.MakeRequest("POST", pathPart, data, msg)
+	resp, err := m.client.MakeRequest("POST", pathPart, data, msg)
 	if err != nil {
-		glog.Errorf("Error creating request", err)
 		return *msg, err
+	}
+	if resp.StatusCode < 200 && resp.StatusCode > 299 {
+		return *msg, fmt.Errorf("request not successful, status=%s, statusCode=%d", resp.Status, resp.StatusCode)
 	}
 	return *msg, nil
 }
