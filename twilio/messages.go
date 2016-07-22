@@ -11,7 +11,8 @@ import (
 const pathPart = "Messages"
 
 type MessageService struct {
-	client *Client
+	statusCallback string
+	client         *Client
 }
 
 type Message struct {
@@ -65,6 +66,19 @@ type MessageIterator struct {
 	client   *Client
 }
 
+func (m *MessageService) Get(sid string) (MessageDetails, error) {
+	msg := new(MessageDetails)
+	resp, err := m.client.GetResource(pathPart, sid, msg)
+	if err != nil {
+		return *msg, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return *msg, fmt.Errorf("get SMS not successful, status=%s", resp.Status)
+	}
+
+	return *msg, nil
+}
+
 func (m *MessageService) Create(data url.Values) (MessageDetails, error) {
 	msg := new(MessageDetails)
 	resp, err := m.client.MakeRequest("POST", pathPart, data, msg)
@@ -83,7 +97,7 @@ func (m *MessageService) SendMessage(from string, to string, body string, mediaU
 	v.Set("Body", body)
 	v.Set("From", from)
 	v.Set("To", to)
-	v.Set("StatusCallback", "http://87b38726.ngrok.io/api/webhooks/twilio/status")
+	v.Set("StatusCallback", m.statusCallback)
 	if mediaUrls != nil {
 		for _, mediaUrl := range mediaUrls {
 			v.Add("MediaUrl", mediaUrl.String())
