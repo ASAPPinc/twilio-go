@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+
+	"github.com/golang/glog"
 )
 
 const pathPart = "Messages"
@@ -73,6 +75,7 @@ func (m *MessageService) Get(sid string) (MessageDetails, error) {
 		return *msg, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		glog.Errorf("Error creating request", err)
 		return *msg, fmt.Errorf("get SMS not successful, status=%s", resp.Status)
 	}
 
