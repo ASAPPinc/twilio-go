@@ -23,7 +23,7 @@ type Client struct {
 	Messages *MessageService
 }
 
-func CreateClient(accountSid string, authToken string, httpClient *http.Client) *Client {
+func CreateClient(accountSid string, authToken string, statusCallback string, httpClient *http.Client) *Client {
 	tr := &http.Transport{
 		ResponseHeaderTimeout: time.Duration(3050) * time.Millisecond,
 	}
@@ -35,7 +35,7 @@ func CreateClient(accountSid string, authToken string, httpClient *http.Client) 
 	c := &Client{AccountSid: accountSid, AuthToken: authToken}
 	c.Client = *httpClient
 
-	c.Messages = &MessageService{client: c}
+	c.Messages = &MessageService{statusCallback: statusCallback, client: c}
 	return c
 }
 
