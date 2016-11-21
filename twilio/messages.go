@@ -68,7 +68,7 @@ type MessageIterator struct {
 
 func (m *MessageService) Create(data url.Values) (Message, error) {
 	msg := new(Message)
-	_, err := m.client.MakeRequest("POST", pathPart, data, msg)
+	_, err := m.client.MakeRequest("POST", ApiTypeRegular, pathPart, data, msg)
 	if err != nil {
 		glog.Errorf("Error creating request", err)
 		return *msg, err

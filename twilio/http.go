@@ -14,6 +14,15 @@ import (
 const BaseUrl = "https://api.twilio.com"
 const Version = "2010-04-01"
 
+const LookupBaseUrl = "https://lookups.twilio.com"
+const LookupVersion = "v1"
+
+type ApiType string
+const (
+	ApiTypeRegular = ApiType("regular")
+	ApiTypeLookup  = ApiType("lookup")
+)
+
 type Client struct {
 	http.Client
 
@@ -21,6 +30,7 @@ type Client struct {
 	AuthToken  string
 
 	Messages *MessageService
+	Lookup   *LookupService
 }
 
 func CreateClient(accountSid string, authToken string, httpClient *http.Client) *Client {
@@ -36,35 +46,44 @@ func CreateClient(accountSid string, authToken string, httpClient *http.Client) 
 	c.Client = *httpClient
 
 	c.Messages = &MessageService{client: c}
+	c.Lookup = &LookupService{client: c}
 	return c
 }
 
-func getFullUri(pathPart string, accountSid string) string {
+func getFullUri(apiType ApiType, pathPart string, accountSid string) string {
+	if apiType == ApiTypeLookup {
+		return strings.Join([]string{LookupBaseUrl, LookupVersion, pathPart}, "/")
+	}
 	return strings.Join([]string{BaseUrl, Version, "Accounts", accountSid, pathPart + ".json"}, "/")
 }
 
 // Convenience wrapper around MakeRequest
 func (c *Client) GetResource(pathPart string, sid string, v interface{}) (*http.Response, error) {
 	sidPart := strings.Join([]string{pathPart, sid}, "/")
-	return c.MakeRequest("GET", sidPart, nil, v)
+	return c.MakeRequest("GET", ApiTypeRegular, sidPart, nil, v)
 }
 
 func (c *Client) CreateResource(pathPart string, data url.Values, v interface{}) (*http.Response, error) {
-	return c.MakeRequest("POST", pathPart, data, v)
+	return c.MakeRequest("POST", ApiTypeRegular, pathPart, data, v)
 }
 
 func (c *Client) UpdateResource(pathPart string, sid string, data url.Values, v interface{}) (*http.Response, error) {
 	sidPart := strings.Join([]string{pathPart, sid}, "/")
-	return c.MakeRequest("POST", sidPart, nil, v)
+	return c.MakeRequest("POST", ApiTypeRegular, sidPart, nil, v)
 }
 
 func (c *Client) ListResource(pathPart string, data url.Values, v interface{}) (*http.Response, error) {
-	return c.MakeRequest("GET", pathPart, data, v)
+	return c.MakeRequest("GET", ApiTypeRegular, pathPart, data, v)
+}
+
+func (c *Client) LookupResource(pathPart string, sid string, data url.Values, v interface{}) (*http.Response, error) {
+	sidPart := strings.Join([]string{pathPart, sid}, "/")
+	return c.MakeRequest("GET", ApiTypeLookup, sidPart, data, v)
 }
 
 // Make a request to the Twilio API.
-func (c *Client) MakeRequest(method string, pathPart string, data url.Values, v interface{}) (*http.Response, error) {
-	req, err := c.CreateRequest(method, pathPart, data)
+func (c *Client) MakeRequest(method string, apiType ApiType, pathPart string, data url.Values, v interface{}) (*http.Response, error) {
+	req, err := c.CreateRequest(method, apiType, pathPart, data)
 	if err != nil {
 		glog.Errorf("Error creating request", err)
 		return nil, err
@@ -90,12 +109,12 @@ func (c *Client) MakeRequest(method string, pathPart string, data url.Values, v 
 }
 
 // Initializes the http request.
-func (c *Client) CreateRequest(method string, pathPart string, data url.Values) (*http.Request, error) {
+func (c *Client) CreateRequest(method string, apiType ApiType, pathPart string, data url.Values) (*http.Request, error) {
 	var rb strings.Reader
 	if data != nil && (method == "POST" || method == "PUT") {
 		rb = *strings.NewReader(data.Encode())
 	}
-	uri := getFullUri(pathPart, c.AccountSid)
+	uri := getFullUri(apiType, pathPart, c.AccountSid)
 	if method == "GET" && data != nil {
 		uri = strings.Join([]string{uri, data.Encode()}, "?")
 	}
