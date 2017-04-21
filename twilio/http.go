@@ -40,8 +40,35 @@ func CreateClient(accountSid string, authToken string, httpClient *http.Client) 
 	return c
 }
 
-func getFullUri(pathPart string, accountSid string) string {
-	return strings.Join([]string{BaseUrl, Version, "Accounts", accountSid, pathPart + ".json"}, "/")
+func getFullUri(pathPart string, accountSid string, customBaseUrl string, customVersion string, resourceId string, postFix string) string {
+	baseUrl := customBaseUrl
+	if baseUrl == "" {
+		baseUrl = BaseUrl
+	}
+
+	version := customVersion
+	if version == "" {
+		version = Version
+	}
+
+	if postFix != "" {
+		pathPart += postFix
+	}
+
+	uriParts := []string{baseUrl, version}
+
+	if accountSid != "" {
+		uriParts = append(uriParts, "Accounts")
+		uriParts = append(uriParts, accountSid)
+	}
+	if pathPart != "" {
+		uriParts = append(uriParts, pathPart)
+	}
+	if resourceId != "" {
+		uriParts = append(uriParts, resourceId)
+	}
+
+	return strings.Join(uriParts, "/")
 }
 
 // Convenience wrapper around MakeRequest
@@ -96,7 +123,7 @@ func (c *Client) CreateRequest(method string, pathPart string, data url.Values) 
 	if data != nil && (method == "POST" || method == "PUT") {
 		rb = *strings.NewReader(data.Encode())
 	}
-	uri := getFullUri(pathPart, c.AccountSid)
+	uri := getFullUri(pathPart, c.AccountSid, "", "", "", ".json")
 	if method == "GET" && data != nil {
 		uri = strings.Join([]string{uri, data.Encode()}, "?")
 	}
@@ -143,8 +170,7 @@ func (c *Client) MakeLookupRequest(pathPart string, data url.Values, resourceId 
 
 // TODO: document
 func (c *Client) createLookupRequest(pathPart string, data url.Values, resourceId string) (*http.Request, error) {
-	//uri := getFullUri(pathPart, "", "https://lookups.twilio.com", "v1", resourceId, "") // TODO: use real URL
-	uri := getFullUri(pathPart, "", "https://demo0353852.mockable.io", "v1", resourceId, "")
+	uri := getFullUri(pathPart, "", "lookups.twilio.com", "v1", resourceId, "")
 	if data != nil {
 		uri = strings.Join([]string{uri, data.Encode()}, "?")
 	}
