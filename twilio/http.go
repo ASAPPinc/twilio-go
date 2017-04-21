@@ -11,7 +11,8 @@ import (
 	"github.com/golang/glog"
 )
 
-const BaseUrl = "https://api.twilio.com"
+//const BaseUrl = "https://api.twilio.com"
+const BaseUrl = "http://localhost:2000"
 const Version = "2010-04-01"
 
 type Client struct {
@@ -115,3 +116,48 @@ func (c *Client) CreateRequest(method string, pathPart string, data url.Values) 
 
 	return req, nil
 }
+
+func (c *Client) MakeLookupRequest(pathPart string, data url.Values, resourceId string, v interface{}) (*http.Response, error) {
+	req, err := c.createLookupRequest(pathPart, data, resourceId)
+	if err != nil {
+		glog.Errorf("Error creating request", err)
+		return nil, err
+	}
+	resp, err := c.Do(req)
+	if err != nil {
+		glog.Errorf("Error making request", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// TODO: document
+func (c *Client) createLookupRequest(pathPart string, data url.Values, resourceId string) (*http.Request, error) {
+	//uri := getFullUri(pathPart, "", "https://lookups.twilio.com", "v1", resourceId, "") // TODO: use real URL
+	uri := getFullUri(pathPart, "", "https://demo0353852.mockable.io", "v1", resourceId, "")
+	if data != nil {
+		uri = strings.Join([]string{uri, data.Encode()}, "?")
+	}
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		glog.Errorf("Couldn't parse lookups.twilio.com as a URL. This should not happen", err)
+		return nil, err
+	}
+	req.SetBasicAuth(c.AccountSid, c.AuthToken)
+	req.Header.Add("Accept-Charset", "utf-8")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("User-Agent", "twilio-go/0.0.1")
+
+	return req, nil
+}
+
