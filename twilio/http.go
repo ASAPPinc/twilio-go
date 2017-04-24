@@ -169,7 +169,7 @@ func (c *Client) MakeLookupRequest(pathPart string, data url.Values, resourceId 
 
 // TODO: document
 func (c *Client) createLookupRequest(pathPart string, data url.Values, resourceId string) (*http.Request, error) {
-	uri := getFullUri(pathPart, "", "lookups.twilio.com", "v1", resourceId, "")
+	uri := getFullUri(pathPart, "", "https://lookups.twilio.com", "v1", resourceId, "")
 	if data != nil {
 		uri = strings.Join([]string{uri, data.Encode()}, "?")
 	}
