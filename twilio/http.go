@@ -11,8 +11,7 @@ import (
 	"github.com/golang/glog"
 )
 
-//const BaseUrl = "https://api.twilio.com"
-const BaseUrl = "http://localhost:2000"
+const BaseUrl = "https://api.twilio.com"
 const Version = "2010-04-01"
 
 type Client struct {
